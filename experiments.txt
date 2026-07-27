@@ -1,3 +1,0 @@
-- work on removing 256 -> 256 layer in deepmodrp
-- experiment with k sparsity in autoencoders
-- is epxansion to 512 necessary to then go to 256?
