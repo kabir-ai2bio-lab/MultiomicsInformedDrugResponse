@@ -12,7 +12,7 @@ Figure 1: Overview of the DeepMoDRP framework
 ## Installation
 ### Clone Repository
 ```bash
-git clone 
+git clone https://github.com/kabir-ai2bio-lab/MultiomicsInformedDrugResponse.git
 cd DeepMoDRP
 ```
 
