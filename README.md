@@ -27,13 +27,6 @@ conda activate deepmodrp
 ```bash
 pip install -r requirements.txt
 ```
-Required packages include:
-- PyTorch
-- PyTorch Geometric
-- NumPy
-- Pandas
-- Scikit-learn
-- SciPy
 
 ### Deactive and Remove Environment
 ```bash
