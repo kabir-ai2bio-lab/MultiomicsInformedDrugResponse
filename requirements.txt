@@ -1,0 +1,6 @@
+PyTorch
+PyTorch Geometric
+NumPy
+Pandas
+Scikit-learn
+SciPy
