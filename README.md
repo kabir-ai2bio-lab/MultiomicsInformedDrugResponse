@@ -1,4 +1,4 @@
-## Welcome to DeepMoDRP's Reimplementation Documentation!
+# Welcome to DeepMoDRP's Reimplementation Documentation!
 This repository corresponds to the reimplementation in the paper titled "DeepMoDRP: A Multi-Omics-Based Deep Learning Framework for Drug Response Prediction in Brain Cancer".
 
 <img width="1155" height="699" alt="Final poster diagram" src="https://github.com/user-attachments/assets/aef145ff-f4bc-4153-987a-8f9f0dd79fb4" />
@@ -10,14 +10,38 @@ Figure 1: Overview of the DeepMoDRP framework
 - [Project Description](https://github.com/kabir-ai2bio-lab/MultiomicsInformedDrugResponse/blob/main/project_description.docx) (A more detailed description of research project)
 
 ## Installation
+### Clone Repository
 ```bash
-python dae_ae_cnv.py
+git clone 
+cd DeepMoDRP
 ```
 
-1. Download the dae_ae_cnv.py, dae_ae_cnv.py, functions.py, gnn_drug.py, pre_process.py
-2. Run dae_ae_cnv.py and dae_ae_rna.py to compress the data before preprocessing
-3. Run pre_process.py to preprocess the data before feeding it to the DRP model
-4. Run deepmodrp.py to run the DRP model and get the final results
+### Create virtual environment
+Using conda:
+```bash
+conda create -n deepmodrp python=3.10 -y
+conda activate deepmodrp
+```
+
+### Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+Required packages include:
+- PyTorch
+- PyTorch Geometric
+- NumPy
+- Pandas
+- Scikit-learn
+- SciPy
+
+### Deactive and Remove Environment
+```bash
+# deactivation
+conda deactivate
+# removal
+conda remove --name deepmodrp --all
+```
 
 ## Data Preprocessing Steps
 The ```pre_process``` directory contains scripts for transforming raw datasets into model-ready inputs.
