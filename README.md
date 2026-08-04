@@ -7,6 +7,7 @@ Figure 1: Overview of the DeepMoDRP framework
 ## Resources
 - [Original Paper](https://onlinelibrary.wiley.com/doi/10.1002/minf.70020)
 - [DOI Reference](https://doi.org/10.1002/minf.70020)
+- [Project Description](https://github.com/kabir-ai2bio-lab/MultiomicsInformedDrugResponse/project_de)
 
 ## Installation
 ```bash
@@ -18,36 +19,73 @@ python dae_ae_cnv.py
 3. Run pre_process.py to preprocess the data before feeding it to the DRP model
 4. Run deepmodrp.py to run the DRP model and get the final results
 
-## Data Processing Steps
+## Data Preprocessing Steps
+The ```pre_process``` directory contains scripts for transforming raw datasets into model-ready inputs.
+
+The preprocessing pipeline performs:
+| Step | Description                                                 |
+| ---- | ----------------------------------------------------------- |
+| 1    | Load raw multi-omics datasets                               |
+| 2    | Match cell lines across datasets                            |
+| 3    | Normalize RNA, CNV, MET, and MUT features                   |
+| 4    | Encode drug structures into molecular graphs                |
+| 5    | Split datasets into training, validation, and testing folds |
+| 6    | Save processed datasets as pickle files                     |
+
+After preprocessing, the generated datasets are stored in:
 ```bash
-python dae_ae_cnv.py
+datasets/
+└── cross-val/
+    ├── train_fold_0.pkl
+    ├── validation_fold_0.pkl
+    ├── test_fold_0.pkl
+    ...
 ```
 
-| Step | Scripts |
-|------|---------|
-| 1 | '' |
-| 2 | '' |
-
-## Preprocessed dataset loading
-| Dataset Module | Usage |
-|----------------|-------|
-| 1 | '' |
-| 2 | '' |
-
+## Model Architecture
+The model is implemented in:
+```bash
+model/
+└── deepmodrp.py
+```
+The architecture consists of three major components:
+1. Multi-omics Feature Representation
+2. Drug Molecular Representation
+3. Drug Response Prediction
 
 ## Training and testing the developed models
-| Model Module | Usage |
-|--------------|-------|
-| 1 | '' |
+The complete pipeline can be executed using:
+```bash
+python example_run.py
+```
+Hyperparameters can also be modified in ```example_run.py```
 
-## Enrichment Analysis
-Predicted drug responses can be further analyzed through Gene Ontology (GO) and Kyoto Encyclopedia of Genes and Genomes (KEGG) enrichment analyses. We created a .csv file containing the top 20% lowest IC50 predictions made by our model. We did this to find out whether the genes and biological pahtways associated with our model's predictions correlate with already established cancer-related pathways.
-The workflow was:
-- Select highly ranked predicted drug cell line responses and save it as top20_predicted_drug_reponses.csv
-- Collated a drug list from reponses and identify biological targets of these drugs and saved it as drug_ids.csv
-- Collated a 
-Perform GO enrichment analysis.
-Identify enriched biological pathways.
+The script performs:
+1. Data preprocessing
+2. Model training
+3. Validation using early stopping
+4. Testing on unseen data
+5. Reporting evaluation metrics
+
+### Evaluation Metrics
+The model reports:
+| Metric | Description                     |
+| ------ | ------------------------------- |
+| RMSE   | Root Mean Square Error          |
+| PCC    | Pearson Correlation Coefficient |
+| R²     | Coefficient of Determination    |
+| MAPE   | Mean Absolute Percentage Error  |
+
+Example output:
+```
+Results from testing, validation and evaluating model
+
+RMSE: 0.0479
+PCC: 0.9448
+R²: 0.8918
+MAPE: 11.02
+```
+
 
 ## Authors
 - [IyiOluwa Adaramola](adaram_i1@denison.edu) - Computer Science, Denison University
