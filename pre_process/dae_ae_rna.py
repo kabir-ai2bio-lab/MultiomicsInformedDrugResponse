@@ -156,8 +156,9 @@ def train(train_data, test_data, all_cnv_data):
             print(f"stopping at {epoch+1}")
             break
 
-train_data, test_data, all_rna_data = load_data()
-train(train_data, test_data, all_rna_data)
+def ae_rna():
+    train_data, test_data, all_rna_data = load_data()
+    train(train_data, test_data, all_rna_data)
             
 
 

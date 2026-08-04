@@ -5,7 +5,7 @@ import torch
 import random
 import numpy as np
 from torch_geometric.data import Data
-from gnn_drug import smile_to_graph
+from model.gnn_drug import smile_to_graph
 
 
 

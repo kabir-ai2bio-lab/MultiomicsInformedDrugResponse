@@ -6,7 +6,6 @@ import pickle
 import numpy as np
 from sklearn.metrics import mean_squared_error, r2_score
 from scipy.stats import pearsonr
-from statistics import mean
 from functions import safe_mape
 import pandas as pd
 
@@ -164,136 +163,137 @@ class DeepMoDRP(torch.nn.Module):
         out = out.view(-1,1)
         return out
 
-rmse = []
-pcc = []
-r2 = []
-mape = []
 
-LR = 1e-4
+def run_model(epochs, bs, LR, patience):
 
-all_predictions = []
-all_drug_names = []
-all_cell_lines = []
+    rmse = []
+    pcc = []
+    r2 = []
+    mape = []
 
-for i in range(5):
-    # Datasets
-    with open(f'cross-val/train_fold_{i}.pkl', "rb") as f:
-        train_dataset = pickle.load(f)
-    with open(f'cross-val/validation_fold_{i}.pkl', 'rb') as f:
-        val_dataset = pickle.load(f)
-    with open(f'cross-val/test_fold_{i}.pkl', "rb") as f:
-        test_dataset = pickle.load(f)
+    all_predictions = []
+    all_drug_names = []
+    all_cell_lines = []
 
-    train_loader = DataLoader(train_dataset,batch_size=1024,shuffle=True)
-    val_loader = DataLoader(val_dataset,batch_size=1024,shuffle=False)
-    test_loader = DataLoader(test_dataset,batch_size=1024,shuffle=False)
+    device = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+    
+    print(f"Using device: {device}")
 
-    # Setting up model
-    device = torch.device("cuda")
-    model = DeepMoDRP().to(device)
-    optimizer = torch.optim.Adam(model.parameters(),lr=LR)
-    loss_function = nn.MSELoss()
-    epochs = 300
+    for i in range(5):
+        # Datasets
+        with open(f'datasets/cross-val/train_fold_{i}.pkl', "rb") as f:
+            train_dataset = pickle.load(f)
+        with open(f'datasets/cross-val/validation_fold_{i}.pkl', 'rb') as f:
+            val_dataset = pickle.load(f)
+        with open(f'datasets/cross-val/test_fold_{i}.pkl', "rb") as f:
+            test_dataset = pickle.load(f)
 
-    # Training and Validation
-    best_mse = 100
-    patience = 30
-    counter = 0
-    for epoch in range(epochs):
+        train_loader = DataLoader(train_dataset,batch_size=bs,shuffle=True)
+        val_loader = DataLoader(val_dataset,batch_size=bs,shuffle=False)
+        test_loader = DataLoader(test_dataset,batch_size=bs,shuffle=False)
 
-        # Train
-        model.train()
-        for batch in train_loader:
-            batch = batch.to(device)
-            optimizer.zero_grad()
-            prediction = model(batch)
-            loss = loss_function(prediction,batch.ic50_targ)
-            loss.backward()
-            optimizer.step()
-            
-        # Validate 
+        # Setting up model
+
+        model = DeepMoDRP().to(device)
+        optimizer = torch.optim.Adam(model.parameters(),lr=LR)
+        loss_function = nn.MSELoss()
+
+        # Training and Validation
+        best_mse = 100
+        counter = 0
+        for epoch in range(epochs):
+
+            # Train
+            model.train()
+            for batch in train_loader:
+                batch = batch.to(device)
+                optimizer.zero_grad()
+                prediction = model(batch)
+                loss = loss_function(prediction,batch.ic50_targ)
+                loss.backward()
+                optimizer.step()
+                
+            # Validate 
+            model.eval()
+            total_preds = torch.Tensor()
+            total_labels = torch.Tensor()
+
+            with torch.no_grad():
+                for batch in val_loader:
+                    batch = batch.to(device)
+                    output = model(batch)
+                    total_preds = torch.cat((total_preds, output.cpu()), 0)
+                    total_labels = torch.cat((total_labels, batch.ic50_targ.cpu()), 0)
+
+            mse = mean_squared_error(total_labels.numpy(),total_preds.numpy())
+
+            if mse < best_mse:
+                best_mse = mse
+                counter = 0
+                torch.save(model.state_dict(), f'folds/model_fold_{i}.pt')
+            else:
+                counter += 1
+
+            if epoch % 10 == 0:
+                print(f'Fold: {i} | Epoch: {epoch + 1}/{epochs} | Validation MSE: {mse}')
+
+            if counter >= patience:
+                print(f'Early stopping at: {epoch+1}')
+                break
+        
+        # Testing
+        model.load_state_dict(
+            torch.load(
+                f'folds/model_fold_{i}.pt',
+                map_location=device
+            )
+        )
         model.eval()
-        total_preds = torch.Tensor()
-        total_labels = torch.Tensor()
+        predictions = []
+        actuals = []
+
+        drug_names = []
+        cell_lines = []
 
         with torch.no_grad():
-            for batch in val_loader:
+            for batch in test_loader:
+                drug_names.extend(batch.drug_name)
+                cell_lines.extend(batch.cell_line) 
+
                 batch = batch.to(device)
-                output = model(batch)
-                total_preds = torch.cat((total_preds, output.cpu()), 0)
-                total_labels = torch.cat((total_labels, batch.ic50_targ.cpu()), 0)
+                pred = model(batch)
+                predictions.extend(pred.cpu().numpy())
+                actuals.extend(batch.ic50_targ.cpu().numpy())
 
-        mse = mean_squared_error(total_labels.numpy(),total_preds.numpy())
+        predictions = np.array(predictions).flatten()
+        actuals = np.array(actuals).flatten()
 
-        if mse < best_mse:
-            best_mse = mse
-            counter = 0
-            torch.save(model.state_dict(), f'model_fold_{i}.pt')
-        else:
-            counter += 1
+        all_predictions.extend(predictions)
+        all_drug_names.extend(drug_names)
+        all_cell_lines.extend(cell_lines)
 
-        if epoch % 10 == 0:
-            print(f'Fold: {i} | Epoch: {epoch + 1}/{epochs} | Validation MSE: {mse}')
+        rmse.append(np.sqrt(mean_squared_error(actuals, predictions)))
+        r2.append(r2_score(actuals, predictions))
+        pcc_value, _ = pearsonr(actuals,predictions)
+        pcc.append(pcc_value)
+        mape.append(safe_mape(actuals, predictions))
 
-        if counter >= patience:
-            print(f'Early stopping at: {epoch+1}')
-            break
-    
-    # Testing
-    model.load_state_dict(torch.load(f'model_fold_{i}.pt'))
-    model.eval()
-    predictions = []
-    actuals = []
+    return rmse, pcc, r2, mape
 
-    drug_names = []
-    cell_lines = []
+# results = pd.DataFrame({
+#     "Drug": all_drug_names,
+#     "Cell_Line": all_cell_lines,
+#     "Predicted_IC50": all_predictions
+# })
 
-    with torch.no_grad():
-        for batch in test_loader:
-            drug_names.extend(batch.drug_name)
-            cell_lines.extend(batch.cell_line) 
+# results = results.sort_values(
+#     by="Predicted_IC50",
+#     ascending=True
+# )
 
-            batch = batch.to(device)
-            pred = model(batch)
-            predictions.extend(pred.cpu().numpy())
-            actuals.extend(batch.ic50_targ.cpu().numpy())
+# top20 = results.head(int(len(results)*0.20))
 
-            
+# top20.to_csv("analysis/top20_predicted_drug_responses.csv",index=False)
 
-    predictions = np.array(predictions).flatten()
-    actuals = np.array(actuals).flatten()
-
-    all_predictions.extend(predictions)
-    all_drug_names.extend(drug_names)
-    all_cell_lines.extend(cell_lines)
-
-    rmse.append(np.sqrt(mean_squared_error(actuals, predictions)))
-    r2.append(r2_score(actuals, predictions))
-    pcc_value, _ = pearsonr(actuals,predictions)
-    pcc.append(pcc_value)
-    mape.append(safe_mape(actuals, predictions))
-
-    print(mape)
-
-results = pd.DataFrame({
-    "Drug": all_drug_names,
-    "Cell_Line": all_cell_lines,
-    "Predicted_IC50": all_predictions
-})
-
-results = results.sort_values(
-    by="Predicted_IC50",
-    ascending=True
-)
-
-top20 = results.head(int(len(results)*0.20))
-
-top20.to_csv(
-    "top20_predicted_drug_responses.csv",
-    index=False
-)
-
-print(f'RMSE: {mean(rmse)}')
-print(f'PCC: {mean(pcc)}')
-print(f'R^2: {mean(r2)}')
-print(f'MAPE: {mean(mape)}')

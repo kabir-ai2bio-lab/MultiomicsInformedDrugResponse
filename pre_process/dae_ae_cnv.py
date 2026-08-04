@@ -13,39 +13,6 @@ EPOCHS = 100
 INPUT_SIZE = 23430
 HIDDEN_SIZE = 256
 
-def read_cell_line_dict(filename):
-    f = open(filename, 'r')
-    reader = csv.reader(f)
-    next(reader)
-    cell_line_dict = {}
-    for i, line in enumerate(reader):
-        cell_line_dict[line[0]] = i
-    return cell_line_dict
-
-def read_cell_line_cnv(filename, cell_line_dict):
-    f = open(filename, 'r')
-    reader = csv.reader(f)
-    next(reader)
-    cnv = [list() for _ in range(len(cell_line_dict))]
-    for line in reader:
-        if line[0] in cell_line_dict:
-            cnv[cell_line_dict[line[0]]] = [float(x) if x != '' else 0.0 for x in line[1:]]
-    return cnv
-
-def load_data():
-    cell_line_dict = read_cell_line_dict('datasets/cellline_listwithACH_80cellline.csv')
-    cnv = read_cell_line_cnv('datasets/CNV_85dim_23430dim.csv', cell_line_dict)
-    
-    min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0,1), copy=False)
-    cnv = min_max_scaler.fit_transform(cnv)
-    all_cnv_data = torch.FloatTensor(cnv)
-
-    train_size = int(len(all_cnv_data)*0.8)
-    train_data = all_cnv_data[:train_size]
-    test_data = all_cnv_data[train_size:]
-
-    return train_data, test_data, all_cnv_data
-
 class sparse_AE(nn.Module):
     def __init__(self, input_size, hidden_size):
         super().__init__()
@@ -119,6 +86,39 @@ class combined_AE(nn.Module):
         combined_rec = d_rec + s_rec
         return combined_latent, combined_rec
 
+def read_cell_line_dict(filename):
+    f = open(filename, 'r')
+    reader = csv.reader(f)
+    next(reader)
+    cell_line_dict = {}
+    for i, line in enumerate(reader):
+        cell_line_dict[line[0]] = i
+    return cell_line_dict
+
+def read_cell_line_cnv(filename, cell_line_dict):
+    f = open(filename, 'r')
+    reader = csv.reader(f)
+    next(reader)
+    cnv = [list() for _ in range(len(cell_line_dict))]
+    for line in reader:
+        if line[0] in cell_line_dict:
+            cnv[cell_line_dict[line[0]]] = [float(x) if x != '' else 0.0 for x in line[1:]]
+    return cnv
+
+def load_data():
+    cell_line_dict = read_cell_line_dict('datasets/cellline_listwithACH_80cellline.csv')
+    cnv = read_cell_line_cnv('datasets/CNV_85dim_23430dim.csv', cell_line_dict)
+    
+    min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0,1), copy=False)
+    cnv = min_max_scaler.fit_transform(cnv)
+    all_cnv_data = torch.FloatTensor(cnv)
+
+    train_size = int(len(all_cnv_data)*0.8)
+    train_data = all_cnv_data[:train_size]
+    test_data = all_cnv_data[train_size:]
+
+    return train_data, test_data, all_cnv_data
+
 def train(train_data, test_data, all_cnv_data):    
     train_loader = DataLoader(dataset= TensorDataset(train_data), batch_size=BATCH_SIZE, shuffle=True)
     # test_loader = DataLoader(dataset= TensorDataset(test_data), batch_size=BATCH_SIZE, shuffle=False)
@@ -157,8 +157,9 @@ def train(train_data, test_data, all_cnv_data):
             print(f"stopping at {epoch+1}")
             break
 
-train_data, test_data, all_cnv_data = load_data()
-train(train_data, test_data, all_cnv_data)
+def ae_cnv():
+    train_data, test_data, all_cnv_data = load_data()
+    train(train_data, test_data, all_cnv_data)
             
 
 

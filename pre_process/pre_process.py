@@ -2,8 +2,14 @@ import pickle
 import numpy as np
 from sklearn import preprocessing
 from functions import min_max_normalization, read_drug_list, read_drug_smiles, read_labels, read_met, read_mut, get_all_graph, get_cell_line_list, create_dataset
+from dae_ae_cnv import ae_cnv
+from dae_ae_rna import ae_rna
 
-def process_data():
+def preprocess_data():
+    # ae processing
+    ae_cnv()
+    ae_rna()
+
     drug_dict = read_drug_list('datasets/smile_inchi.csv')
     smile = read_drug_smiles('datasets/smile_inchi.csv', drug_dict)
     smile_graph = get_all_graph(smile)
@@ -29,6 +35,7 @@ def process_data():
 
     drug_names = []
     cell_lines = []
+
     for item in data:
         drug, cell_line, ic50 = item
         if drug in drug_dict and cell_line in cell_line_dict:
@@ -38,6 +45,7 @@ def process_data():
             cell_met.append(met[cell_line_dict[cell_line]])
             cell_mut.append(mut[cell_line_dict[cell_line]])
             targets.append(ic50)
+            
             drug_names.append(drug)
             cell_lines.append(cell_line)
 
@@ -51,94 +59,91 @@ def process_data():
         np.asarray(cell_rna), 
         np.asarray(cell_mut), 
         np.asarray(cell_met),
+        
         np.asarray(drug_names),
         np.asarray(cell_lines)
         )
 
-    return targets, drug_smile, cell_cnv, cell_rna, smile_graph, cell_mut, cell_met, drug_names, cell_lines
+    for i in range(5):
+        total_size = drug_smile.shape[0]
+        split_0 = int(total_size * 0.2 * i)
+        split_1 = split_0 + int(total_size * 0.1)
+        split_2 = int(total_size * 0.2 * (i+1))
 
-targets, drug_smile, cell_cnv, cell_rna, smile_graph, cell_mut, cell_met, drug_names, cell_lines = process_data()
+        ds_test = drug_smile[split_0:split_1]
+        ds_val = drug_smile[split_1:split_2]
+        ds_train = np.concatenate((drug_smile[:split_0],drug_smile[split_2:]), axis=0)
 
-for i in range(5):
-    total_size = drug_smile.shape[0]
-    split_0 = int(total_size * 0.2 * i)
-    split_1 = split_0 + int(total_size * 0.1)
-    split_2 = int(total_size * 0.2 * (i+1))
+        cnv_test = cell_cnv[split_0:split_1]
+        cnv_val = cell_cnv[split_1:split_2]
+        cnv_train = np.concatenate((cell_cnv[:split_0],cell_cnv[split_2:]), axis=0)
 
-    ds_test = drug_smile[split_0:split_1]
-    ds_val = drug_smile[split_1:split_2]
-    ds_train = np.concatenate((drug_smile[:split_0],drug_smile[split_2:]), axis=0)
+        rna_test = cell_rna[split_0:split_1]
+        rna_val = cell_rna[split_1:split_2]
+        rna_train = np.concatenate((cell_rna[:split_0],cell_rna[split_2:]), axis=0)
 
-    cnv_test = cell_cnv[split_0:split_1]
-    cnv_val = cell_cnv[split_1:split_2]
-    cnv_train = np.concatenate((cell_cnv[:split_0],cell_cnv[split_2:]), axis=0)
+        met_test = cell_met[split_0:split_1]
+        met_val = cell_met[split_1:split_2]
+        met_train = np.concatenate((cell_met[:split_0],cell_met[split_2:]), axis=0)
 
-    rna_test = cell_rna[split_0:split_1]
-    rna_val = cell_rna[split_1:split_2]
-    rna_train = np.concatenate((cell_rna[:split_0],cell_rna[split_2:]), axis=0)
+        mut_test = cell_mut[split_0:split_1]
+        mut_val = cell_mut[split_1:split_2]
+        mut_train = np.concatenate((cell_mut[:split_0],cell_mut[split_2:]), axis=0)
 
-    met_test = cell_met[split_0:split_1]
-    met_val = cell_met[split_1:split_2]
-    met_train = np.concatenate((cell_met[:split_0],cell_met[split_2:]), axis=0)
+        targ_test = targets[split_0:split_1]
+        targ_val = targets[split_1:split_2]
+        targ_train = np.concatenate((targets[:split_0],targets[split_2:]), axis=0)
 
-    mut_test = cell_mut[split_0:split_1]
-    mut_val = cell_mut[split_1:split_2]
-    mut_train = np.concatenate((cell_mut[:split_0],cell_mut[split_2:]), axis=0)
+        drug_names_test = drug_names[split_0:split_1]
+        drug_names_val = drug_names[split_1:split_2]
+        drug_names_train = np.concatenate((drug_names[:split_0],drug_names[split_2:]), axis=0)
 
-    targ_test = targets[split_0:split_1]
-    targ_val = targets[split_1:split_2]
-    targ_train = np.concatenate((targets[:split_0],targets[split_2:]), axis=0)
+        cell_lines_test = cell_lines[split_0:split_1]
+        cell_lines_val = cell_lines[split_1:split_2]
+        cell_lines_train = np.concatenate((cell_lines[:split_0],cell_lines[split_2:]), axis=0)
 
-    drug_names_test = drug_names[split_0:split_1]
-    drug_names_val = drug_names[split_1:split_2]
-    drug_names_train = np.concatenate((drug_names[:split_0],drug_names[split_2:]), axis=0)
+        train_dataset = create_dataset(
+            ds_train,
+            cnv_train,
+            rna_train,
+            targ_train,
+            met_train,
+            mut_train,
+            smile_graph,
+            drug_names_train,
+            cell_lines_train
+        )
 
-    cell_lines_test = cell_lines[split_0:split_1]
-    cell_lines_val = cell_lines[split_1:split_2]
-    cell_lines_train = np.concatenate((cell_lines[:split_0],cell_lines[split_2:]), axis=0)
+        val_dataset = create_dataset(
+            ds_val,
+            cnv_val,
+            rna_val,
+            targ_val,
+            met_val,
+            mut_val, 
+            smile_graph,
+            drug_names_val,
+            cell_lines_val
+        )
 
-    train_dataset = create_dataset(
-        ds_train,
-        cnv_train,
-        rna_train,
-        targ_train,
-        met_train,
-        mut_train,
-        smile_graph,
-        drug_names_train,
-        cell_lines_train
-    )
+        test_dataset = create_dataset(
+            ds_test,
+            cnv_test,
+            rna_test,
+            targ_test,
+            met_test,
+            mut_test,
+            smile_graph,
+            drug_names_test,
+            cell_lines_test
+        )
 
-    val_dataset = create_dataset(
-        ds_val,
-        cnv_val,
-        rna_val,
-        targ_val,
-        met_val,
-        mut_val, 
-        smile_graph,
-        drug_names_val,
-        cell_lines_val
-    )
+        # Save as pickles
+        with open(f'datasets/cross-val/train_fold_{i}.pkl', 'wb') as f:
+            pickle.dump(train_dataset, f)
 
-    test_dataset = create_dataset(
-        ds_test,
-        cnv_test,
-        rna_test,
-        targ_test,
-        met_test,
-        mut_test,
-        smile_graph,
-        drug_names_test,
-        cell_lines_test
-    )
+        with open(f'datasets/cross-val/validation_fold_{i}.pkl', 'wb') as f:
+            pickle.dump(val_dataset, f)
 
-    # Save as pickles
-    with open(f'cross-val/train_fold_{i}.pkl', 'wb') as f:
-        pickle.dump(train_dataset, f)
-
-    with open(f'cross-val/validation_fold_{i}.pkl', 'wb') as f:
-        pickle.dump(val_dataset, f)
-
-    with open(f'cross-val/test_fold_{i}.pkl', 'wb') as f:
-        pickle.dump(test_dataset, f)
+        with open(f'datasets/cross-val/test_fold_{i}.pkl', 'wb') as f:
+            pickle.dump(test_dataset, f)
