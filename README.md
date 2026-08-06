@@ -1,6 +1,5 @@
 # Welcome to DeepMoDRP's Reimplementation Documentation!
-This repository corresponds to the reimplementation in the paper titled "DeepMoDRP: A Multi-Omics-Based Deep Learning Framework for Drug Response Prediction in Brain Cancer". Here is a slide deck presentation that goes over the main concepts ([Multi-omics slide deck](https://docs.google.com/presentation/d/e/2PACX-1vQGXHXg5-IQJrYj4HhxH7RDwMl8hKceiw4pXSyvUZImMOYPcimjRGc1T9L_svo7pMpgEMYUwJ4ohnUI/pub?start=false&loop=false&delayms=10000))
-
+This repository corresponds to the reimplementation in the paper titled "DeepMoDRP: A Multi-Omics-Based Deep Learning Framework for Drug Response Prediction in Brain Cancer". 
 <img width="1155" height="699" alt="Final poster diagram" src="https://github.com/user-attachments/assets/aef145ff-f4bc-4153-987a-8f9f0dd79fb4" />
 Figure 1: Overview of the DeepMoDRP framework
 
