@@ -6,7 +6,7 @@ Figure 1: Overview of the DeepMoDRP framework
 ## Other Resources
 - [Original Paper](https://onlinelibrary.wiley.com/doi/10.1002/minf.70020)
 - [DOI Reference](https://doi.org/10.1002/minf.70020)
-- [Poster presentation]()
+- [Poster presentation](https://github.com/kabir-ai2bio-lab/MultiomicsInformedDrugResponse/blob/main/Final%20Poster.pdf)
 - [Project Description](https://github.com/kabir-ai2bio-lab/MultiomicsInformedDrugResponse/blob/main/project_description.docx) (A more detailed description of research project)
 
 ## Installation
