@@ -113,6 +113,13 @@ Predicted drug responses can be further analyzed through Gene Ontology (GO) and 
 - Collate the predicted drugs and use the ChEMBL database to map drug names to ChEMBL IDs and identify their associated biological targets, saving the results as drug_ids.csv.
 - Perform GO Biological Process and KEGG pathway enrichment analysis on the identified genes.
 
+<img width="2022" height="1212" alt="image" src="https://github.com/user-attachments/assets/c80728c9-3f4e-49b0-befe-8fafcd8b68f2" />
+Figure 2: GO Pathway Enrichment Boxplot
+
+<img width="2022" height="1212" alt="image" src="https://github.com/user-attachments/assets/c99e95ba-4157-4315-badf-5aead0f6e5f5" />
+Figure 3: KEGG Pathway Enrichment Boxplot
+
+
 ## Authors
 - [IyiOluwa Adaramola](adaram_i1@denison.edu) - Computer Science, Denison University
 - [Anowarul Kabir](akabir@usf.edu) - Bellini College of AI, Cybersecurity & Computing, University of South Florida
