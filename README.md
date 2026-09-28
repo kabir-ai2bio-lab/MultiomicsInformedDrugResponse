@@ -114,10 +114,10 @@ Predicted drug responses can be further analyzed through Gene Ontology (GO) and 
 - Perform GO Biological Process and KEGG pathway enrichment analysis on the identified genes.
 
 <img width="2022" height="1212" alt="image" src="https://github.com/user-attachments/assets/c80728c9-3f4e-49b0-befe-8fafcd8b68f2" />
-Figure 2: GO Pathway Enrichment Boxplot
+Figure 1: GO Pathway Enrichment Boxplot
 
 <img width="2022" height="1212" alt="image" src="https://github.com/user-attachments/assets/c99e95ba-4157-4315-badf-5aead0f6e5f5" />
-Figure 3: KEGG Pathway Enrichment Boxplot
+Figure 2: KEGG Pathway Enrichment Boxplot
 
 
 ## Authors
